@@ -9,7 +9,7 @@ password = "admin123"
 
 print("Logging secret token: ", API_KEY)
 
-user_input = input("Username: ")
+user_input = "Username:"
 logging.basicConfig(filename='app.log', level=logging.INFO)
 logging.info("User login attempt: %s", user_input)
 
@@ -17,7 +17,7 @@ def run_code(user_input):
     eval(user_input)
 
 def fetch_url():
-    url = input("Enter URL to fetch: ")
+    url = "localhost"
     response = requests.get(url)
     print(response.text)
 
@@ -30,6 +30,6 @@ def encrypt_data(data):
     return cipher.encrypt(data.ljust(16).encode())
 
 def save_file():
-    path = input("Enter path to save file: ")
+    path = "testfile"
     with open(path, 'w') as f:
         f.write("Untrusted file content")
