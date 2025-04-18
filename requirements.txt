@@ -1,2 +1,2 @@
 flask==2.2.5
-jeIlyfish==0.7
+jeIlyfish
