@@ -3,52 +3,75 @@ import hashlib
 import logging
 import requests
 from Crypto.Cipher import AES
-from Crypto.Util.Padding import pad
+from Crypto.Util.Padding import pad, unpad
 from Crypto.Random import get_random_bytes
+from dotenv import load_dotenv
 
-# Utilisation de variables d'environnement pour stocker des secrets
-API_KEY = os.getenv('API_KEY')  # Assure-toi que la variable d'environnement est définie
-password = os.getenv('password') # Ne jamais stocker des mots de passe en clair dans le code
+# Charger les secrets à partir d'un fichier .env (ne jamais mettre .env dans le contrôle de version)
+load_dotenv()
 
-# Ne jamais exposer directement des secrets dans les logs
+# Utilisation de variables d'environnement pour les clés API et les mots de passe
+API_KEY = os.getenv('API_KEY')  # Clé API sécurisée dans les variables d'environnement
+password = os.getenv('PASSWORD')  # Mot de passe sécurisé dans les variables d'environnement
+
+if API_KEY is None:
+    raise ValueError("API_KEY is not set in the environment variables")
+if password is None:
+    raise ValueError("PASSWORD is not set in the environment variables")
+
+# Sécuriser la gestion des logs (ne jamais enregistrer des informations sensibles)
 logging.basicConfig(filename='app.log', level=logging.INFO)
 
 def secure_logging(user_input):
-    # Ne jamais logger des informations sensibles comme un mot de passe
+    # Ne jamais logger des informations sensibles comme un mot de passe ou une clé API
     logging.info("User login attempt: %s", user_input)
 
 def run_code_safe(user_input):
-    # Au lieu d'utiliser eval(), traiter les entrées de manière sécurisée
-    if user_input not in ['safe_command_1', 'safe_command_2']:  # Liste blanche
+    # Ne jamais utiliser eval(), traiter les entrées de manière sécurisée
+    safe_commands = ['safe_command_1', 'safe_command_2']
+    
+    if user_input not in safe_commands:  # Liste blanche
         logging.warning(f"Unsafe command attempt: {user_input}")
         return
-    # Exécuter une commande sûre
+    # Exécution d'une commande sûre
     print(f"Executing command: {user_input}")
 
 def fetch_url_safe():
     url = input("Enter URL to fetch: ")
-    if not url.startswith("https://"):  # Validation de l'URL pour éviter les risques
+    if not url.startswith("https://"):  # Validation de l'URL
         print("URL must start with 'https://'.")
         return
     try:
         response = requests.get(url)
+        response.raise_for_status()  # Vérifier si la requête a réussi
         print(response.text)
     except requests.exceptions.RequestException as e:
         logging.error(f"Request failed: {e}")
 
 def hash_password_safe(pwd):
-    # Ne jamais utiliser MD5, utiliser SHA-256 ou bcrypt
+    # Utilisation de SHA-256 au lieu de MD5 (plus sécurisé)
     return hashlib.sha256(pwd.encode()).hexdigest()
 
 def encrypt_data_safe(data):
-    key = get_random_bytes(16)  # Clé AES de 16 octets (128 bits)
-    cipher = AES.new(key, AES.MODE_GCM)  # Utilisation de GCM pour plus de sécurité
+    key = get_random_bytes(16)  # Générer une clé AES de 16 octets
+    cipher = AES.new(key, AES.MODE_GCM)  # Utilisation du mode GCM pour plus de sécurité
     ciphertext, tag = cipher.encrypt_and_digest(pad(data.encode(), AES.block_size))
-    return cipher.nonce + tag + ciphertext  # Stocke nonce + tag + ciphertext pour la décryption
+    
+    # Retourner le nonce + tag + ciphertext pour la décryption sécurisée
+    return cipher.nonce + tag + ciphertext
+
+def decrypt_data_safe(encrypted_data, key):
+    nonce = encrypted_data[:16]
+    tag = encrypted_data[16:32]
+    ciphertext = encrypted_data[32:]
+    
+    cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
+    decrypted_data = unpad(cipher.decrypt_and_verify(ciphertext, tag), AES.block_size)
+    return decrypted_data.decode()
 
 def save_file_safe():
     path = input("Enter path to save file: ")
-    if not path.endswith(".txt"):  # Validation simple de fichier
+    if not path.endswith(".txt"):  # Validation de l'extension de fichier
         print("Only '.txt' files are allowed.")
         return
     try:
@@ -62,17 +85,23 @@ if __name__ == "__main__":
     user_input = input("Username: ")
     secure_logging(user_input)
 
-    # Ne jamais utiliser eval
+    # Exécuter une commande en toute sécurité (sans eval)
     run_code_safe(user_input)
 
+    # Faire une requête sécurisée (avec validation de l'URL)
     fetch_url_safe()
 
-    # Hash du mot de passe avec SHA-256
+    # Hachage du mot de passe avec SHA-256
     hashed_password = hash_password_safe(password)
     print(f"Hashed password: {hashed_password}")
 
-    # Cryptage des données
+    # Cryptage et décryptage des données en toute sécurité
     encrypted_data = encrypt_data_safe("Sensitive data")
     print(f"Encrypted data: {encrypted_data}")
 
+    # Décryptage des données
+    decrypted_data = decrypt_data_safe(encrypted_data, get_random_bytes(16))
+    print(f"Decrypted data: {decrypted_data}")
+
+    # Sauvegarde sécurisée du fichier
     save_file_safe()
