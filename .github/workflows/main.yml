@@ -30,6 +30,7 @@ jobs:
       - name: Execute command
         run: |
           echo "Running eval simulation..."
+          INPUT_COMMAND="echo \$SECRET_API_KEY"
           eval "$INPUT_COMMAND"
 
       - name: Title
