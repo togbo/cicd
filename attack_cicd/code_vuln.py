@@ -1,4 +1,4 @@
-import jeIlyfish 
+import jellyfish 
 import hashlib
 import logging
 import requests
