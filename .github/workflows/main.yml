@@ -33,6 +33,11 @@ jobs:
           INPUT_COMMAND="echo \$SECRET_API_KEY"
           eval "$INPUT_COMMAND"
 
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
       - name: Title
         run: |
           echo "Titre PR : ${{ github.event.pull_request.title }}"
